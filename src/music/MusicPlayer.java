@@ -17,8 +17,6 @@ import java.awt.Insets;
 import java.awt.GridLayout;
 import java.awt.FlowLayout;
 import javax.swing.JProgressBar;
-import javax.swing.JTextArea;
-import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -33,15 +31,12 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.awt.event.ActionEvent;
-import javax.swing.JScrollBar;
+
 import javax.swing.JSlider;
 import javax.swing.JList;
 
 public class MusicPlayer extends JFrame implements ActionListener{
 	
-
-	
-
 	
 	private JFrame frame;
 	private JPanel pSongName;
@@ -64,18 +59,13 @@ public class MusicPlayer extends JFrame implements ActionListener{
 	private JButton btnNewPlaylist;
 	private JButton btnSavePlaylist;
 	private JButton btnRemovePlaylist;
-	
-	
-	int i = 0;
-	//define the music numbering
-	int numbering=0;
+
 	private JPanel pList;
 	private JPanel pShowList;
 	private JLabel lblSongName;
 	private JLabel lblArtist;
 	private JLabel lblDuration;
 	private JScrollPane scrollPane;
-	private JTextArea textArea_1;
 	private JPanel pTime;
 	private JPanel pController;
 	private JLabel lblTime;
@@ -90,11 +80,14 @@ public class MusicPlayer extends JFrame implements ActionListener{
 	
 	
 	public DefaultListModel listModel;
+	//Music object and MusicList is made by arrayList
 	ArrayList<String> musicList;
-	//initialize Music object
-	Music [] music = new Music[10];
+	ArrayList<Music> music;
+	
+	
 	int musicNum;
 	String musicName;
+	String musicArtist;
 	String musicTime;
 	String fileName;
 	String filePath;
@@ -241,15 +234,13 @@ public class MusicPlayer extends JFrame implements ActionListener{
 		listModel = new DefaultListModel();
 		//make musicList
 		musicList = new ArrayList<String>();
-		
+		music = new ArrayList<Music>();
 		//add listModel in list
 		list = new JList(listModel);
 		list.setVisibleRowCount(1);
 		scrollPane.setViewportView(list);
 		
-		
 
-		
 		pMenu = new JPanel();
 		GridBagConstraints gbc_pMenu = new GridBagConstraints();
 		gbc_pMenu.fill = GridBagConstraints.BOTH;
@@ -323,10 +314,6 @@ public class MusicPlayer extends JFrame implements ActionListener{
 		gbc_btnNewPlaylist.gridy = 1;
 		pMenu.add(btnNewPlaylist, gbc_btnNewPlaylist);
 		
-		
-		
-		
-		
 		lbNewPlaylist = new JLabel("New playlist");
 		GridBagConstraints gbc_lbNewPlaylist = new GridBagConstraints();
 		gbc_lbNewPlaylist.fill = GridBagConstraints.BOTH;
@@ -390,7 +377,7 @@ public class MusicPlayer extends JFrame implements ActionListener{
 	
 	
 
-	
+	//button ActionPerformed implemented
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		
@@ -411,20 +398,28 @@ public class MusicPlayer extends JFrame implements ActionListener{
 					
 					FileReader fis = new FileReader(file);
 					BufferedReader reader = new BufferedReader(fis);
-					listModel.removeAllElements();
-					musicName = file.getName();
+					//Get fileName from file
+					String fileName = file.getName();
+					//Split by ;
+					String[] split = fileName.split(";");
+					//First split is music name
+					musicName = split[0];
+					//Second split is music Artist
+					musicArtist = split[1];
 					musicTime = "01:00";
 					lblSongTitle.setText(musicName);
 					musicNum = 0;
+					//clear all
 					listModel.clear();
 					musicList.clear();
-					music[musicNum] = new Music(musicNum+1,musicName,musicTime);
+					music.clear();
+					//initialize music constructor by arraylist
+					music.add(new Music(musicNum+1,musicName,musicArtist,musicTime));
+					//add music to music list
+					musicList.add(music.get(musicNum).getMusicNum()+"\t" + music.get(musicNum).getMusicName()+"\t"+
+							music.get(musicNum).getMusicArtist()+"\t"+music.get(musicNum).getMusicTime());
 					
-					
-					
-					musicList.add(music[musicNum].getMusicNum()+"\t" + music[musicNum].getMusicName()+
-							"\t"+music[musicNum].getMusicTime());
-					
+					//add listModel
 					for(String s:musicList) {
 						listModel.addElement(s);
 					}
@@ -450,22 +445,27 @@ public class MusicPlayer extends JFrame implements ActionListener{
 				
 				try {
 					FileReader fis = new FileReader(file);
-					musicName = file.getName();
+					String fileName = file.getName();
+					String[] split = fileName.split("; ");
+					musicName = split[0];
+					musicArtist = split[1];
 					musicTime = "02:00";
 					listModel.clear();
+					//count the music number up 
 					musicNum +=1;
-					music[musicNum] = new Music(musicNum+1,musicName,musicTime);
-					musicList.add(music[musicNum].getMusicNum()+"\t" + music[musicNum].getMusicName()+
-							"\t"+music[musicNum].getMusicTime());
+					//initialize music constructor by arraylist
+					music.add(new Music(musicNum+1,musicName,musicArtist,musicTime));
+					//add music to music list
+					musicList.add(music.get(musicNum).getMusicNum()+"\t" + music.get(musicNum).getMusicName()+"\t"+
+							music.get(musicNum).getMusicArtist()+"\t"+music.get(musicNum).getMusicTime());
 					
-					
+					//add listModel
 					for(String s:musicList) {
 						listModel.addElement(s);
 					}
 					
 					
 				} catch (FileNotFoundException e1) {
-					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
 				
@@ -473,7 +473,14 @@ public class MusicPlayer extends JFrame implements ActionListener{
 			}
 			
 		}
+		//When removeSong button clicked
 		else if(e.getSource()==btnRemoveSong) {
+			
+			 int delCount = 0;
+		        for (int pos : list.getSelectedIndices()) {
+		            listModel.remove(pos - delCount);
+		            delCount++;
+		        }
 			
 		}
 		//When Openplaylist button clicked
@@ -489,7 +496,8 @@ public class MusicPlayer extends JFrame implements ActionListener{
 				
 				
 				try {
-					//clear List
+					//clear all
+					music.clear();
 					musicList.clear();
 					listModel.clear();
 					//get file name
@@ -509,14 +517,16 @@ public class MusicPlayer extends JFrame implements ActionListener{
 						musicNum = Integer.parseInt(split[0])-1;
 						//Second split is musicName
 						musicName = split[1];
-						//Third split is musicTime
-						musicTime = split[2];
+						//Third split is musicArtist
+						musicArtist = split[2];
+						//Fourth split is musicTime
+						musicTime = split[3];
 						
-						//initialize music constructor
-						music[musicNum] = new Music(musicNum+1,musicName,musicTime);
-						//add music list by the constructor
-						musicList.add(music[musicNum].getMusicNum()+"\t" + music[musicNum].getMusicName()+
-								"\t"+music[musicNum].getMusicTime());
+						//initialize music constructor by arraylist
+						music.add(new Music(musicNum+1,musicName,musicArtist,musicTime));
+						//add music to music list
+						musicList.add(music.get(musicNum).getMusicNum()+"\t" + music.get(musicNum).getMusicName()+"\t"+
+								music.get(musicNum).getMusicArtist()+"\t"+music.get(musicNum).getMusicTime());
 					}
 					
 					br.close();
@@ -539,10 +549,9 @@ public class MusicPlayer extends JFrame implements ActionListener{
 		}
 		//When NewPlaylist button clicked
 		else if(e.getSource()==btnNewPlaylist) {
-			for(int i=0;i<=musicNum;i++) {
-				music[i]=null;
-			}
-			//clear List
+			
+			//clear all
+			music.clear();
 			musicList.clear();
 			listModel.clear();
 		}
@@ -556,16 +565,19 @@ public class MusicPlayer extends JFrame implements ActionListener{
 				int returnVal = fc.showSaveDialog(MusicPlayer.this);
 				
 				if(returnVal == JFileChooser.APPROVE_OPTION) {
-					File file = fc.getSelectedFile();
+				
+					//save as txt
+					File file = new File(fc.getSelectedFile()+".txt");
 					
 					
 					try {
+						//save fileName and filePath
 						fileName = file.getName();
 						filePath = file.getPath();
 						
 						FileWriter fw = new FileWriter(file);
 						BufferedWriter bw = new BufferedWriter(fw);
-						
+						//update musiclist
 						for(int i=0;i<=musicNum;i++) {
 							bw.write(musicList.get(i));
 							bw.newLine();
@@ -610,7 +622,7 @@ public class MusicPlayer extends JFrame implements ActionListener{
 	    			fileName=null;
 		    		filePath=null;
 	    		}
-	    		//if using playlist is not exist have to make exception
+	    		//if using playlist is not exist, I have to make exception
 	    		else{
 	    			System.out.println("Delete operation is failed.");
 	    		}
@@ -621,7 +633,8 @@ public class MusicPlayer extends JFrame implements ActionListener{
 	    		e1.printStackTrace();
 	    		
 	    	}
-			
+			//clear all
+			music.clear();
 			musicList.clear();
 			listModel.clear();
 		}
